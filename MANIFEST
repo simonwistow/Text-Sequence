@@ -1,0 +1,8 @@
+Build
+Build.PL
+Changes
+MANIFEST			This list of files
+META.yml
+README
+lib/Text/Sequence.pm
+test.pl

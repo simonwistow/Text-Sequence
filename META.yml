@@ -1,0 +1,14 @@
+--- #YAML:1.0
+name: Text-Sequence
+version: 0.22
+license: perl
+distribution_type: module
+requires: {}
+recommends: {}
+build_requires: {}
+conflicts: {}
+provides:
+  Text::Sequence:
+    file: lib/Text/Sequence.pm
+    version: 0.22
+generated_by: Module::Build version 0.21
