@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Text-Sequence
-version: 0.22
+version: 0.25
 license: perl
 distribution_type: module
 requires: {}
@@ -10,5 +10,5 @@ conflicts: {}
 provides:
   Text::Sequence:
     file: lib/Text/Sequence.pm
-    version: 0.22
+    version: 0.25
 generated_by: Module::Build version 0.21

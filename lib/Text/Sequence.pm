@@ -4,7 +4,7 @@ use strict;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.22';
+$VERSION = '0.25';
 
 =pod
 
@@ -17,9 +17,10 @@ Text::Sequence - spot one-dimensional sequences in patterns of text
     use Text::Sequence;
     
     my @list      = get_files_in_dir();
-    my @sequences = Text::Sequence::find(@list);
+    my ($sequences, $singletons) = Text::Sequence::find($somedir);
 
-    my $sequence  = @sequences[0];
+
+    my $sequence  = $sequences->[0];
     print $sequence->template();
 
     my $num = 0;    
@@ -87,11 +88,31 @@ It does B<not> spot multi-dimensional sequences, e.g. C<foo-%d-%d.jpg>.
 
 =head2 find( @elements )
 
-A static method to find all the sequences in a list of elements.
+    my ($sequences, $singletons) = Text::Sequence::find($somedir);
+
+A static method to find all the sequences in a list of elements. 
+Both are returned as arrayrefs.
 
 =cut
 
 sub find {
+    my @elements = @_;
+    my %candidates = _find_candidates(@elements);
+    my @seqs = _find_sequences(\%candidates);
+
+    # Find singletons by process of elimination, going through
+    # all sequence members.
+    my %singletons = map { $_ => 1 } @elements;
+    foreach my $seq (@seqs) {
+        my @members = $seq->members;
+        delete $singletons{$seq->template($_)} foreach @members;
+    }
+    
+    return (\@seqs, [ keys %singletons ]);
+}
+
+
+sub _find_candidates {
     my %candidates;
 
     foreach my $element (@_) {
@@ -100,7 +121,7 @@ sub find {
         while ($element =~ /\G.*?(?:(\d+)|(?<![a-z])([a-z])\b)/gi) {
             my $cand = $element;
 
-            if ($1) {
+            if (defined $1) {
               # Numerical sequence
               my $num = substr($cand, $-[1], $+[1] - $-[1], '%d');
               
@@ -116,24 +137,30 @@ sub find {
               push @{ $candidates{$cand}{formats}{$pad . $length} }, $num + 0;
               $candidates{$cand}{count}++;
             }
-            elsif ($2) {
+            elsif (defined $2) {
               my $letter = substr($cand, $-[2], $+[2] - $-[2], '%s');
               push @{ $candidates{$cand}{formats}{letter} }, $letter;
               $candidates{$cand}{count}++;
             }
             else {
-              die "BUG!";
+              die "BUG!  Missing number or letter at pos ", pos($element),
+                  " of '$element', match was '$&'";
             }
         }
     }
+    return %candidates;
+}
+
+sub _find_sequences {
+    my ($candidates) = @_;
 
     my @seqs;
 
-    foreach my $cand (keys %candidates) {
+    foreach my $cand (keys %$candidates) {
         # it's not a sequence if there's only 1
-        next if $candidates{$cand}{count} == 1; 
+        next if $candidates->{$cand}{count} == 1; 
 
-        my $formats = $candidates{$cand}{formats};
+        my $formats = $candidates->{$cand}{formats};
 
         if (my $letters = $formats->{letter}) {
           push @seqs, Text::Sequence->new($cand, @$letters);
@@ -175,6 +202,7 @@ sub find {
 }
 
 
+
 =head2 new( $template, @member_nums )
 
 Creates a new sequence object.
@@ -187,10 +215,28 @@ sub new {
 
     my $self = bless {
         template => $template,
+        re       => _to_re($template),
         members  => [ @_ ],
     }, $class;
 
     return $self;
+}
+
+
+sub _to_re {
+    my $re = shift;
+
+    if ($re =~ m!%\.(\d+)d!) {
+        my $m = $1;
+        $re =~ s!$&!(\\d{$m})!;
+    } elsif ($re =~ m!%d!) {
+        $re =~ s!$&!(\\d+)!;
+    } elsif ($re =~ m!%s!) {
+        $re =~ s!$&!(.+=?)!;
+    }
+
+    return $re;
+
 }
 
 =head2 template( $number_or_letter )
@@ -228,6 +274,34 @@ sub members {
     return @{ $self->{members} };
 }
 
+=head2 in( $string) 
+
+Tells you whether a particular string is in this sequence.
+
+=cut
+
+sub in {
+    my $self = shift;
+    my $test = shift;
+    
+    my $re = $self->{re};
+    
+    return $test =~    m!$re!;    
+
+}
+
+=head2 re 
+
+Returns the regular expression used to determine whether something
+is in the sequence or not.
+
+=cut
+
+sub re {
+    return $_[0]->{re};
+}
+
+
 =head1 AUTHOR
 
 Simon Wistow <simon@thegestalt.org>
@@ -238,6 +312,8 @@ Adam Spiers <cpan@adamspiers.org>
 Copyright (c) 2004 - Simon Wistow
 
 =head1 BUGS
+
+Can't insist on sequences being contiguous (yet).
 
 =head1 SEE ALSO
 

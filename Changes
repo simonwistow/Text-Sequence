@@ -1,3 +1,10 @@
+Tue Jul  6 17:32:52 BST 2004   v.025
+
+Lots of work on singletons by Adam Spiers. Some work
+to generate regexen by Simon Wistow.
+
+
+
 Mon Jun 21 09:44:25 BST 2004   v0.22
 
 Initial release. This is based on some code by Simon Wistow
