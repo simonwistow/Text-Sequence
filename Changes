@@ -1,4 +1,11 @@
-Tue Jul  6 17:32:52 BST 2004   v.025
+Tue Feb 14 19:33:00 2017    v0.26
+
+Very minor internal tweak to make the test suite pass consistently
+on recent Perls. This is RT#111173.
+
+
+
+Tue Jul  6 17:32:52 BST 2004   v0.25
 
 Lots of work on singletons by Adam Spiers. Some work
 to generate regexen by Simon Wistow.

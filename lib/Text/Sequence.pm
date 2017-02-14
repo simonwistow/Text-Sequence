@@ -4,7 +4,7 @@ use strict;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.25';
+$VERSION = '0.26';
 
 =pod
 
@@ -194,7 +194,7 @@ sub _find_sequences {
         }
         # Now the remaining elements (if any) all get swept into the
         # %d non-padded bucket.
-        my @members = ( map @{ $formats->{$_} }, keys %$formats );
+        my @members = ( map @{ $formats->{$_} }, sort keys %$formats );
         push @seqs, Text::Sequence->new($cand, @members) if @members;
     }
 
